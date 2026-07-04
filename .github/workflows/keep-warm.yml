@@ -1,0 +1,33 @@
+name: keep-warm
+
+# Mantiene despierto el Web Service Free de Render (duerme tras ~15 min sin tráfico)
+# para que claude.ai web/móvil reciba datos MCP reales sin el cold-start (~50 s).
+# Ventana: CST 05:00–23:00 (UTC-6, sin DST en México) = horario activo de trading.
+# Deja el resto del día dormir → ~540 h/mes, holgado bajo el límite Free de 750 h/mes.
+on:
+  schedule:
+    - cron: '*/10 11-23 * * *'   # UTC 11:00–23:59  = CST 05:00–17:59
+    - cron: '*/10 0-4 * * *'     # UTC 00:00–04:59  = CST 18:00–22:59
+  workflow_dispatch: {}           # permite dispararlo a mano desde la pestaña Actions
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping MCP endpoint (initialize) para despertar/mantener Render
+        run: |
+          code=$(curl -sS -m 70 -o /dev/null -w "%{http_code}" \
+            -X POST https://tradingview-mcp-bfvu.onrender.com/mcp \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"keep-warm","version":"1"}}}')
+          echo "MCP /mcp -> HTTP $code"
+          # 200 = despierto y respondiendo el protocolo MCP. Otros códigos: log, no fallar el job.
+          if [ "$code" != "200" ]; then
+            echo "::warning::Respuesta inesperada ($code) — puede ser cold-start en curso; el próximo ping lo confirma."
+          fi
