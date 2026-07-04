@@ -5,6 +5,11 @@ Tu propia copia del servidor **TradingView Multi-Market Screener** (paquete PyPI
 **remoto** para poder añadirla como *connector* en **claude.ai** (web + móvil) y que
 además aparezca en **Cowork / Claude Desktop** — una sola entrada para las 3 superficies.
 
+> ✅ **EN VIVO:** desplegado en Render →
+> **`https://tradingview-mcp-bfvu.onrender.com/mcp`**
+> Añadido en claude.ai como custom connector "TradingView" (27 herramientas, probado con
+> `coin_analysis` WLDUSDT). El fix del HTTP 421 "Invalid Host header" está en `launcher.py`.
+
 - **Transporte:** `streamable-http`
 - **Endpoint MCP:** `/mcp`  (POST-only, requiere `Accept: text/event-stream`)
 - **Auth:** ninguna por defecto (ver nota de seguridad abajo)
