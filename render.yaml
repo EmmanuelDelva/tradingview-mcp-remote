@@ -1,0 +1,12 @@
+# Render Blueprint — one-click deploy of the TradingView MCP server as a remote connector.
+# In Render: New +  ->  Blueprint  ->  pick this repo  ->  Apply.
+services:
+  - type: web
+    name: tradingview-mcp
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    # No healthCheckPath on purpose: every GET path returns 404/406 (MCP is POST-only
+    # on /mcp). Render marks the service live once it detects the bound $PORT.
+    envVars: []
