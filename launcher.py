@@ -143,7 +143,6 @@ def _cryptocom(sym):
     return _pack("crypto.com", inst, _num(t.get("oi")), None, None, None, _num(t.get("a")), t.get("t"))
 
 
-@tvs.mcp.tool()
 def derivatives_snapshot(symbol: str = "WLDUSDT") -> dict:
     """Real-time perpetual DERIVATIVES metrics — open interest, funding rate,
     mark & index price (basis) — for a USDT-margined perp. Complements
@@ -180,7 +179,21 @@ def derivatives_snapshot(symbol: str = "WLDUSDT") -> dict:
     }
 
 
-from tradingview_mcp.server import main  # noqa: E402  (import after tool registration)
+import sys as _sys
+
+# Register on the SAME FastMCP instance the package built, guarded so a
+# registration hiccup (e.g. a FastMCP version skew on the host) can never crash
+# the server — worst case it serves the upstream tools and logs a warning. The
+# stderr lines show up in the Render deploy logs so a live deploy is verifiable.
+try:
+    tvs.mcp.tool()(derivatives_snapshot)
+    _n = len(getattr(tvs.mcp, "_tool_manager", None)._tools) if hasattr(tvs.mcp, "_tool_manager") else "?"
+    _sys.stderr.write(f"[launcher] derivatives_snapshot registered OK (tools now: {_n})\n")
+except Exception as _e:  # pragma: no cover
+    _sys.stderr.write(f"[launcher] WARN could not register derivatives_snapshot: {_e!r}\n")
+_sys.stderr.flush()
+
+from tradingview_mcp.server import main  # noqa: E402
 
 if __name__ == "__main__":
     main()
